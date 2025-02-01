@@ -1,0 +1,18 @@
+name: "Cycle Pipeline Runner"
+description: "Triggers a Cycle pipeline and tracks its progress."
+inputs:
+  pipeline_id:
+    description: "Pipeline ID to trigger"
+    required: true
+  trigger_key_secret:
+    description: "Pipeline's trigger key secret required for execution"
+    required: true
+  variables:
+    description: "JSON string of key-value pairs for pipeline variables"
+    required: false
+  advanced:
+    description: "JSON string for advanced pipeline settings"
+    required: false
+runs:
+  using: "node20"
+  main: "dist/index.js"
