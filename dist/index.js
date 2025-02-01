@@ -145,6 +145,7 @@ async function run() {
             // since we are using the public endpoint with a trigger key secret.
             apiKey: "",
             hubId: "",
+            baseUrl: core.getInput("base_url") || undefined,
         });
         // Step 1: Trigger the pipeline and get the run ID
         const pipelineRunId = await triggerPipeline(client, pipelineId, variables, advanced);
