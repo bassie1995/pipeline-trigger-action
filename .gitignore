@@ -39,10 +39,6 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/**
-!node_modules/@actions
-!node_modules/@octokit
-!node_modules/@cycleplatform
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
