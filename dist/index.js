@@ -91,7 +91,7 @@ async function triggerPipeline(client, pipelineId, variables, advanced) {
 }
 // Polling function to track pipeline execution
 async function trackPipeline(client, pipelineId, runId) {
-    let completedSteps = new Set(); // Track completed steps
+    const completedSteps = new Set(); // Track completed steps
     let startedSteps = new Set(); // Track started steps
     while (true) {
         const { data, error } = await client.GET(`/v1/pipelines/{pipelineId}/runs/{runId}`, {
@@ -107,32 +107,32 @@ async function trackPipeline(client, pipelineId, runId) {
             return;
         }
         const { data: pipelineRun } = data;
-        for (const stage of pipelineRun.stages) {
-            for (const step of stage.steps) {
-                const stepId = step.identifier || step.action; // Use identifier if available
+        pipelineRun.stages.forEach((stage, stageIdx) => {
+            stage.steps.forEach((step, stepIdx) => {
+                const stepId = `${stageIdx}-${stepIdx}`;
                 const started = step.events.started !== exports.zeroTimeString;
                 const finished = step.events.finished !== exports.zeroTimeString;
                 if (started && !startedSteps.has(stepId)) {
                     startedSteps.add(stepId);
-                    core.info(`⏳ Step started: ${step.action}`);
+                    core.info(`⏳ Step started [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`);
                 }
                 if (finished && !completedSteps.has(stepId)) {
                     completedSteps.add(stepId);
                     if (step.success) {
-                        core.info(`✅ Step completed: ${step.action}`);
+                        core.info(`✅ Step completed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`);
                     }
                     else {
-                        core.setFailed(`❌ Step failed: ${step.action} - ${step.error?.message}`);
+                        core.setFailed(`❌ Step failed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action} - ${step.error?.message}`);
                         return;
                     }
                 }
-            }
-        }
+            });
+        });
         if (pipelineRun.state.current === "complete") {
             core.info("🎉 Pipeline run completed successfully!");
             return;
         }
-        await new Promise((res) => setTimeout(res, 5000)); // Poll every 5 seconds
+        await new Promise((res) => setTimeout(res, 3000));
     }
 }
 async function run() {
