@@ -138,10 +138,13 @@ async function trackPipeline(
           ? prevStep.events.finished !== zeroTimeString
           : true; 
 
+        const groupName = `[Stage ${stageIdx + 1}, Step ${stepIdx + 1}]: ${step.action}`
+
         if (prevStepFinished && !startedSteps.has(stepId)) {
           startedSteps.add(stepId);
+          core.startGroup(`${groupName}`)
           core.info(
-            `⏳ Step started [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`
+            `⏳ Step started ${groupName}`
           );
         }
 
@@ -149,14 +152,15 @@ async function trackPipeline(
           completedSteps.add(stepId);
           if (step.success) {
             core.info(
-              `✅ Step completed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}\n`
+              `✅ Step completed ${groupName}\n`
             );
           } else {
             core.setFailed(
-              `❌ Step failed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action} - ${step.error?.message}\n`
+              `❌ Step failed ${groupName} - ${step.error?.message}\n`
             );
             return;
           }
+          core.endGroup()
         }
       });
     });

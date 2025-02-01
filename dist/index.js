@@ -116,19 +116,22 @@ async function trackPipeline(client, pipelineId, runId) {
                 const prevStepFinished = prevStep
                     ? prevStep.events.finished !== exports.zeroTimeString
                     : true;
+                const groupName = `[Stage ${stageIdx + 1}, Step ${stepIdx + 1}]: ${step.action}`;
                 if (prevStepFinished && !startedSteps.has(stepId)) {
                     startedSteps.add(stepId);
-                    core.info(`⏳ Step started [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`);
+                    core.startGroup(`${groupName}`);
+                    core.info(`⏳ Step started ${groupName}`);
                 }
                 if (finished && !completedSteps.has(stepId)) {
                     completedSteps.add(stepId);
                     if (step.success) {
-                        core.info(`✅ Step completed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}\n`);
+                        core.info(`✅ Step completed ${groupName}\n`);
                     }
                     else {
-                        core.setFailed(`❌ Step failed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action} - ${step.error?.message}\n`);
+                        core.setFailed(`❌ Step failed ${groupName} - ${step.error?.message}\n`);
                         return;
                     }
+                    core.endGroup();
                 }
             });
         });
