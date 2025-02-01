@@ -129,11 +129,16 @@ async function trackPipeline(
 
     pipelineRun.stages.forEach((stage, stageIdx) => {
       stage.steps.forEach((step, stepIdx) => {
-        const stepId = `${stageIdx}-${stepIdx}`
-        const started = step.events.started !== zeroTimeString;
+        const stepId = `${stageIdx}-${stepIdx}`;
         const finished = step.events.finished !== zeroTimeString;
 
-        if (started && !startedSteps.has(stepId)) {
+        // Determine if the previous step is completed
+        const prevStep = stepIdx > 0 ? stage.steps[stepIdx - 1] : null;
+        const prevStepFinished = prevStep
+          ? prevStep.events.finished !== zeroTimeString
+          : true; 
+
+        if (prevStepFinished && !startedSteps.has(stepId)) {
           startedSteps.add(stepId);
           core.info(
             `⏳ Step started [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`
@@ -144,11 +149,11 @@ async function trackPipeline(
           completedSteps.add(stepId);
           if (step.success) {
             core.info(
-              `✅ Step completed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}`
+              `✅ Step completed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action}\n`
             );
           } else {
             core.setFailed(
-              `❌ Step failed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action} - ${step.error?.message}`
+              `❌ Step failed [Stage ${stageIdx}, Step ${stepIdx}]: ${step.action} - ${step.error?.message}\n`
             );
             return;
           }
