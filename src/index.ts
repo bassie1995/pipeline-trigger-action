@@ -48,8 +48,8 @@ async function triggerPipeline(
   const { data: jd } = data;
 
   try {
-    const job = await trackJob(client, jd.job.id).promise;
-    const pipelineRunId = job.tasks[0]?.output.run_id;
+    const job = await trackJob(client, jd.job?.id || "").promise;
+    const pipelineRunId = job.tasks[0]?.output?.run_id;
 
     if (!pipelineRunId) {
       throw new Error(`❌ Failed to trigger pipeline: job is missing run ID`);
@@ -58,10 +58,10 @@ async function triggerPipeline(
     core.info(`✅ Pipeline triggered successfully! Run ID: ${pipelineRunId}`);
     return pipelineRunId;
   } catch (e: unknown) {
-    if (typeof e === "object" && "id" in e) {
+    if (e && typeof e === "object" && "id" in e) {
       const j = e as components["schemas"]["Job"];
       throw new Error(
-        `❌ Failed to trigger pipeline: job failed - ${j.state.error.message}`
+        `❌ Failed to trigger pipeline: job failed - ${j.state.error?.message}`
       );
     } else {
       throw new Error(
@@ -107,15 +107,19 @@ async function trackPipeline(
       for (const step of stage.steps) {
         const stepId = step.identifier || step.action; // Use identifier if available
 
-        const finished = step.events.finished != zeroTimeString
+        const finished = step.events.finished != zeroTimeString;
 
         // Check if step has completed
         if (finished && !completedSteps.has(stepId)) {
           completedSteps.add(stepId);
           if (step.success) {
-            core.info(`✅ Step completed: ${step.action} (ident: ${step.identifier})`);
+            core.info(
+              `✅ Step completed: ${step.action} (ident: ${step.identifier})`
+            );
           } else {
-            core.setFailed(`❌ Step failed: ${step.action} (ident: ${step.identifier})`);
+            core.setFailed(
+              `❌ Step failed: ${step.action} (ident: ${step.identifier})`
+            );
             return;
           }
         }
@@ -164,7 +168,12 @@ async function run() {
     });
 
     // Step 1: Trigger the pipeline and get the run ID
-    const pipelineRunId = await triggerPipeline(client, pipelineId, variables, advanced);
+    const pipelineRunId = await triggerPipeline(
+      client,
+      pipelineId,
+      variables,
+      advanced
+    );
 
     // Step 2: Track the pipeline progress
     await trackPipeline(client, pipelineId, pipelineRunId);

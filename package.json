@@ -4,7 +4,7 @@
   "description": "Trigger a pipeline on Cycle as a Github Action",
   "main": "index.ts",
   "scripts": {
-    "build": "vite build",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Petrichor Holdings, Inc.",
@@ -16,7 +16,6 @@
   "devDependencies": {
     "@types/node": "22.13.0",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3",
-    "vite": "^6.0.11"
+    "typescript": "5.7.3"
   }
 }
