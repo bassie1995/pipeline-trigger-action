@@ -40,16 +40,18 @@ exports.zeroTimeString = "0001-01-01T00:00:00Z";
 // Function to trigger a pipeline with variables and advanced options
 async function triggerPipeline(client, pipelineId, variables, advanced) {
     core.info(`🚀 Triggering pipeline: ${pipelineId}`);
-    const { data, error } = await client.POST(`/v1/pipelines/{pipelineId}/trigger`, {
+    const { data, error } = await client.POST(`/v1/pipelines/{pipelineId}/tasks`, {
         params: {
             path: {
                 pipelineId,
             },
         },
         body: {
-            secret: core.getInput("trigger_key_secret"),
-            variables,
-            advanced,
+            action: "trigger",
+            contents: {
+                variables,
+                // advanced,
+            },
         },
     });
     if (error) {
@@ -120,6 +122,8 @@ async function trackPipeline(client, pipelineId, runId) {
 async function run() {
     try {
         const pipelineId = core.getInput("pipeline_id");
+        const apiKey = core.getInput("api_key");
+        const hubId = core.getInput("hub_id");
         let variables = {};
         try {
             const variablesInput = core.getInput("variables");
@@ -143,8 +147,8 @@ async function run() {
         const client = (0, api_client_typescript_1.getClient)({
             // api key and hub id are actually not needed,
             // since we are using the public endpoint with a trigger key secret.
-            apiKey: "",
-            hubId: "",
+            apiKey,
+            hubId,
             baseUrl: core.getInput("base_url") || undefined,
         });
         // Step 1: Trigger the pipeline and get the run ID

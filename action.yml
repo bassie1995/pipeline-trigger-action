@@ -1,11 +1,14 @@
 name: "Cycle Pipeline Runner"
 description: "Triggers a Cycle pipeline and tracks its progress."
 inputs:
+  api_key:
+    description: "API Key for Cycle API with pipeline permissions"
+    required: true
+  hub_id:
+    description: "Hub ID in Cycle"
+    required: true
   pipeline_id:
     description: "Pipeline ID to trigger"
-    required: true
-  trigger_key_secret:
-    description: "Pipeline's trigger key secret required for execution"
     required: true
   variables:
     description: "JSON string of key-value pairs for pipeline variables"

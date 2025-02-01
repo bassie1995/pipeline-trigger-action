@@ -22,7 +22,7 @@ async function triggerPipeline(
   core.info(`🚀 Triggering pipeline: ${pipelineId}`);
 
   const { data, error } = await client.POST(
-    `/v1/pipelines/{pipelineId}/trigger`,
+    `/v1/pipelines/{pipelineId}/tasks`,
     {
       params: {
         path: {
@@ -30,9 +30,11 @@ async function triggerPipeline(
         },
       },
       body: {
-        secret: core.getInput("trigger_key_secret"),
-        variables,
-        advanced,
+        action: "trigger",
+        contents: {
+          variables,
+          // advanced,
+        },
       },
     }
   );
@@ -139,6 +141,8 @@ async function trackPipeline(
 async function run() {
   try {
     const pipelineId = core.getInput("pipeline_id");
+    const apiKey = core.getInput("api_key");
+    const hubId = core.getInput("hub_id");
 
     let variables: Record<string, string> = {};
     try {
@@ -163,8 +167,8 @@ async function run() {
     const client = getClient({
       // api key and hub id are actually not needed,
       // since we are using the public endpoint with a trigger key secret.
-      apiKey: "",
-      hubId: "",
+      apiKey,
+      hubId,
       baseUrl: core.getInput("base_url") || undefined,
     });
 
