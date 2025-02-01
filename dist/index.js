@@ -40,6 +40,19 @@ exports.zeroTimeString = "0001-01-01T00:00:00Z";
 // Function to trigger a pipeline with variables and advanced options
 async function triggerPipeline(client, pipelineId, variables, advanced) {
     core.info(`🚀 Triggering pipeline: ${pipelineId}`);
+    const { data: getPipelineData, error: getPipelineError } = await client.GET("/v1/pipelines/{pipelineId}", {
+        params: {
+            path: {
+                pipelineId,
+            },
+        },
+    });
+    if (getPipelineError) {
+        throw new Error(`❌ Failed to fetch pipeline: ${getPipelineError.error.title} ${getPipelineError.error.detail
+            ? ` - ${getPipelineError.error.detail}`
+            : ""}`);
+    }
+    core.info(`🚰 Running Cycle pipeline '${getPipelineData.data.name}'`);
     const { data, error } = await client.POST(`/v1/pipelines/{pipelineId}/tasks`, {
         params: {
             path: {
@@ -102,10 +115,10 @@ async function trackPipeline(client, pipelineId, runId) {
                 if (finished && !completedSteps.has(stepId)) {
                     completedSteps.add(stepId);
                     if (step.success) {
-                        core.info(`✅ Step completed: ${step.action} (ident: ${step.identifier})`);
+                        core.info(`✅ Step completed: ${step.action}`);
                     }
                     else {
-                        core.setFailed(`❌ Step failed: ${step.action} (ident: ${step.identifier})`);
+                        core.setFailed(`❌ Step failed: ${step.action} - ${step.error?.message}`);
                         return;
                     }
                 }
