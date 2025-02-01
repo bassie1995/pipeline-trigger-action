@@ -102,6 +102,7 @@ async function trackPipeline(
   runId: string
 ) {
   let completedSteps = new Set<string>(); // Track completed steps
+  let startedSteps = new Set<string>(); // Track started steps
 
   while (true) {
     const { data, error } = await client.GET(
@@ -130,10 +131,14 @@ async function trackPipeline(
     for (const stage of pipelineRun.stages) {
       for (const step of stage.steps) {
         const stepId = step.identifier || step.action; // Use identifier if available
+        const started = step.events.started !== zeroTimeString;
+        const finished = step.events.finished !== zeroTimeString;
 
-        const finished = step.events.finished != zeroTimeString;
+        if (started && !startedSteps.has(stepId)) {
+          startedSteps.add(stepId);
+          core.info(`⏳ Step started: ${step.action}`);
+        }
 
-        // Check if step has completed
         if (finished && !completedSteps.has(stepId)) {
           completedSteps.add(stepId);
           if (step.success) {
@@ -153,7 +158,6 @@ async function trackPipeline(
       return;
     }
 
-    core.info("⏳ Pipeline still running...");
     await new Promise((res) => setTimeout(res, 5000)); // Poll every 5 seconds
   }
 }
@@ -185,8 +189,6 @@ async function run() {
     }
 
     const client = getClient({
-      // api key and hub id are actually not needed,
-      // since we are using the public endpoint with a trigger key secret.
       apiKey,
       hubId,
       baseUrl: core.getInput("base_url") || undefined,

@@ -92,6 +92,7 @@ async function triggerPipeline(client, pipelineId, variables, advanced) {
 // Polling function to track pipeline execution
 async function trackPipeline(client, pipelineId, runId) {
     let completedSteps = new Set(); // Track completed steps
+    let startedSteps = new Set(); // Track started steps
     while (true) {
         const { data, error } = await client.GET(`/v1/pipelines/{pipelineId}/runs/{runId}`, {
             params: {
@@ -109,8 +110,12 @@ async function trackPipeline(client, pipelineId, runId) {
         for (const stage of pipelineRun.stages) {
             for (const step of stage.steps) {
                 const stepId = step.identifier || step.action; // Use identifier if available
-                const finished = step.events.finished != exports.zeroTimeString;
-                // Check if step has completed
+                const started = step.events.started !== exports.zeroTimeString;
+                const finished = step.events.finished !== exports.zeroTimeString;
+                if (started && !startedSteps.has(stepId)) {
+                    startedSteps.add(stepId);
+                    core.info(`⏳ Step started: ${step.action}`);
+                }
                 if (finished && !completedSteps.has(stepId)) {
                     completedSteps.add(stepId);
                     if (step.success) {
@@ -127,7 +132,6 @@ async function trackPipeline(client, pipelineId, runId) {
             core.info("🎉 Pipeline run completed successfully!");
             return;
         }
-        core.info("⏳ Pipeline still running...");
         await new Promise((res) => setTimeout(res, 5000)); // Poll every 5 seconds
     }
 }
@@ -157,8 +161,6 @@ async function run() {
             throw new Error("❌ Invalid JSON format in 'advanced' input.");
         }
         const client = (0, api_client_typescript_1.getClient)({
-            // api key and hub id are actually not needed,
-            // since we are using the public endpoint with a trigger key secret.
             apiKey,
             hubId,
             baseUrl: core.getInput("base_url") || undefined,
