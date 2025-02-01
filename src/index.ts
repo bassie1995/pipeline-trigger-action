@@ -19,7 +19,6 @@ async function triggerPipeline(
   variables: Record<string, string>,
   advanced: AdvancedOptions
 ): Promise<string> {
-  core.info(`🚀 Triggering pipeline: ${pipelineId}`);
 
   const { data: getPipelineData, error: getPipelineError } = await client.GET(
     "/v1/pipelines/{pipelineId}",
@@ -41,7 +40,7 @@ async function triggerPipeline(
       }`
     );
   }
-  
+
   core.info(`🚀 Triggering pipeline: '${getPipelineData.data.name}'`);
 
   const { data, error } = await client.POST(

@@ -39,7 +39,6 @@ const api_client_typescript_1 = require("@cycleplatform/api-client-typescript");
 exports.zeroTimeString = "0001-01-01T00:00:00Z";
 // Function to trigger a pipeline with variables and advanced options
 async function triggerPipeline(client, pipelineId, variables, advanced) {
-    core.info(`🚀 Triggering pipeline: ${pipelineId}`);
     const { data: getPipelineData, error: getPipelineError } = await client.GET("/v1/pipelines/{pipelineId}", {
         params: {
             path: {
