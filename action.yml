@@ -13,6 +13,9 @@ inputs:
   advanced:
     description: "JSON string for advanced pipeline settings"
     required: false
+  base_url:
+    description: "Optional base url override for dedicated cores"
+    required: false
 runs:
   using: "node20"
   main: "dist/index.js"
