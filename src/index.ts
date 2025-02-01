@@ -41,8 +41,8 @@ async function triggerPipeline(
       }`
     );
   }
-
-  core.info(`🚰 Running Cycle pipeline '${getPipelineData.data.name}'`);
+  
+  core.info(`🚀 Triggering pipeline: '${getPipelineData.data.name}'`);
 
   const { data, error } = await client.POST(
     `/v1/pipelines/{pipelineId}/tasks`,
