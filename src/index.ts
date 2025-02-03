@@ -54,7 +54,7 @@ async function triggerPipeline(
         action: "trigger",
         contents: {
           variables,
-          // advanced,
+          advanced,
         },
       },
     }

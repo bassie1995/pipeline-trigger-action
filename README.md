@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Track Cycle Pipeline
-        uses: cycleplatform/pipeline-trigger-action@v0.5.7
+        uses: cycleplatform/pipeline-trigger-action@v0.5.8
         with:
           api_key: ${{ secrets.CYCLE_API_KEY }}
           hub_id: ${{ secrets.CYCLE_HUB_ID }}

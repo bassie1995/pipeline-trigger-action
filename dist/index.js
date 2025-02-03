@@ -62,7 +62,7 @@ async function triggerPipeline(client, pipelineId, variables, advanced) {
             action: "trigger",
             contents: {
                 variables,
-                // advanced,
+                advanced,
             },
         },
     });
