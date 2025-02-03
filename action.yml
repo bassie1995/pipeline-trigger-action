@@ -1,4 +1,4 @@
-name: "Cycle Pipeline Runner"
+name: "Cycle.io Pipeline Runner"
 author: Petrichor Holdings, Inc.
 description: "Triggers a Cycle pipeline and tracks its progress."
 branding:
