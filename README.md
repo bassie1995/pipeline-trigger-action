@@ -1,10 +1,12 @@
 # Cycle Pipeline Github Action
 
-<picture>
+<a href="https://cycle.io">
+<picture class="red">
   <source media="(prefers-color-scheme: dark)" srcset="https://cycle.io/global/resources/images/logos/cycle-logo-white.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://static.cycle.io/icons/logo/cycle-logo-fullcolor.svg">
-  <img alt="cycle" src="https://static.cycle.io/icons/logo/cycle-logo-fullcolor.svg">
+  <img alt="cycle" width="300px" src="https://static.cycle.io/icons/logo/cycle-logo-fullcolor.svg">
 </picture>
+</a>
 
 ### **Trigger a pipeline on Cycle using a GitHub Action**
 This GitHub Action allows you to [**trigger a pipeline on Cycle.io**](https://cycle.io/docs/platform/introduction-to-pipelines), pass variables, and track the execution **step-by-step** with detailed logging.
@@ -95,10 +97,6 @@ When the action runs, you’ll see detailed logs:
 ### 🔴 **Pipeline doesn't start**
 - Ensure **`pipeline_id`** is correct.
 - Verify **API key and secret** are valid.
-
-### 🔴 **Steps are not logged correctly**
-- Ensure **variables and advanced options** are correctly formatted as **JSON strings**.
-
 ---
 
 ## 📄 **License**
