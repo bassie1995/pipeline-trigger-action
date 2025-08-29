@@ -9,72 +9,74 @@
 </a>
 
 ### **Trigger a pipeline on Cycle using a GitHub Action**
+
 This GitHub Action allows you to [**trigger a pipeline on Cycle.io**](https://cycle.io/docs/platform/introduction-to-pipelines), pass variables, and track the execution **step-by-step** with detailed logging.
 
 ---
 
 ## 📖 **How It Works**
+
 ✅ Triggers a Cycle pipeline using the provided **Pipeline ID**  
 ✅ Passes optional **variables** and **advanced settings**  
 ✅ **Tracks each step** as it progresses  
 ✅ Logs when **each step starts and completes**  
-✅ **Fails fast** if a step fails  
+✅ **Fails fast** if a step fails
 
 ---
 
 ## 📌 **Usage**
+
 ### **1️⃣ Add this Action to Your Workflow**
+
 Create (or update) your GitHub Actions workflow file (e.g., `.github/workflows/cycle-pipeline.yml`):
 
 ```yaml
 name: Run Cycle Pipeline
 
 on:
-  workflow_dispatch: # Allows manual triggering from the GitHub UI
+    workflow_dispatch: # Allows manual triggering from the GitHub UI
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v3
 
-      - name: Track Cycle Pipeline
-        uses: cycleplatform/pipeline-trigger-action@v0.5.8
-        with:
-          api_key: ${{ secrets.CYCLE_API_KEY }}
-          hub_id: ${{ secrets.CYCLE_HUB_ID }}
-          pipeline_id: "your-pipeline-id"
-          secret: ${{ secrets.PIPELINE_SECRET }}
-          variables: |
-            {
-              "version": "1.2.3",
-              "feature_flag": "true"
-            }
-          advanced: |
-            {
-              "sub_queue": "custom-queue",
-              "skip_locks": 1
-            }
-
+            - name: Track Cycle Pipeline
+              uses: cycleplatform/pipeline-trigger-action@v0.5.8
+              with:
+                  api_key: ${{ secrets.CYCLE_API_KEY }}
+                  hub_id: ${{ secrets.CYCLE_HUB_ID }}
+                  pipeline_id: "your-pipeline-id"
+                  variables: |
+                      {
+                        "version": "1.2.3",
+                        "feature_flag": "true"
+                      }
+                  advanced: |
+                      {
+                        "sub_queue": "custom-queue",
+                        "skip_locks": 1
+                      }
 ```
-
 
 ---
 
 ## ⚙️ **Inputs**
-| Name           | Required | Description |
-|----------------|----------|-------------|
-| `api_key`      | ✅ Yes   | Your Cycle API Key |
-| `hub_id`       | ✅ Yes   | Your Cycle Hub ID |
-| `pipeline_id`  | ✅ Yes   | The Cycle Pipeline ID to trigger |
-| `secret`       | ✅ Yes   | A required secret for executing the pipeline |
-| `variables`    | ❌ No    | JSON string of key-value pairs for pipeline variables (optional) |
-| `advanced`     | ❌ No    | JSON string for advanced pipeline settings (optional) |
+
+| Name          | Required | Description                                                      |
+| ------------- | -------- | ---------------------------------------------------------------- |
+| `api_key`     | ✅ Yes   | Your Cycle API Key                                               |
+| `hub_id`      | ✅ Yes   | Your Cycle Hub ID                                                |
+| `pipeline_id` | ✅ Yes   | The Cycle Pipeline ID to trigger                                 |
+| `variables`   | ❌ No    | JSON string of key-value pairs for pipeline variables (optional) |
+| `advanced`    | ❌ No    | JSON string for advanced pipeline settings (optional)            |
 
 ---
 
 ## 📜 **Example Output in GitHub Actions Logs**
+
 When the action runs, you’ll see detailed logs:
 
 ```
@@ -94,10 +96,14 @@ When the action runs, you’ll see detailed logs:
 ---
 
 ## ❓ **Troubleshooting**
+
 ### 🔴 **Pipeline doesn't start**
-- Ensure **`pipeline_id`** is correct.
-- Verify **API key and secret** are valid.
+
+-   Ensure **`pipeline_id`** is correct.
+-   Verify **API key** is valid.
+
 ---
 
 ## 📄 **License**
+
 This GitHub Action is **open-source** under the [Apache 2.0 License](LICENSE)

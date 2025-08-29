@@ -1,4 +1,4 @@
-import * as core from "@actions/core";
+import * as core from "@actions/core"
 import {
   components,
   getClient,
@@ -8,77 +8,79 @@ import {
 import pipelineVariables from "../variables.json"
 
 type AdvancedOptions = {
-  sub_queue?: string | null;
-  skip_locks?: number | null;
-};
+    sub_queue?: string | null
+    skip_locks?: number | null
+}
 
-export const zeroTimeString = "0001-01-01T00:00:00Z";
+export const zeroTimeString = "0001-01-01T00:00:00Z"
 
 // Function to trigger a pipeline with variables and advanced options
 async function triggerPipeline(
-  client: ReturnType<typeof getClient>,
-  pipelineId: string,
-  variables: Record<string, string>,
-  advanced: AdvancedOptions
+    client: ReturnType<typeof getClient>,
+    pipelineId: string,
+    variables: Record<string, string>,
+    advanced: AdvancedOptions
 ): Promise<string> {
-  const { data: getPipelineData, error: getPipelineError } = await client.GET(
-    "/v1/pipelines/{pipelineId}",
-    {
-      params: {
-        path: {
-          pipelineId,
-        },
-      },
-    }
-  );
+    const { data: getPipelineData, error: getPipelineError } = await client.GET(
+        "/v1/pipelines/{pipelineId}",
+        {
+            params: {
+                path: {
+                    pipelineId,
+                },
+            },
+        }
+    )
 
-  if (getPipelineError) {
-    throw new Error(
-      `❌ Failed to fetch pipeline: ${getPipelineError.error.title} ${
-        getPipelineError.error.detail
-          ? ` - ${getPipelineError.error.detail}`
-          : ""
-      }`
-    );
-  }
+    if (getPipelineError) {
+        throw new Error(
+            `❌ Failed to fetch pipeline: ${getPipelineError.error.title} ${
+                getPipelineError.error.detail
+                    ? ` - ${getPipelineError.error.detail}`
+                    : ""
+            }`
+        )
+    }
 
   console.log(`🚀 Triggering pipeline: '${getPipelineData.data.name}'`);
 
-  const { data, error } = await client.POST(
-    `/v1/pipelines/{pipelineId}/tasks`,
-    {
-      params: {
-        path: {
-          pipelineId,
-        },
-      },
-      body: {
-        action: "trigger",
-        contents: {
-          variables,
-          advanced,
-        },
-      },
+    const { data, error } = await client.POST(
+        `/v1/pipelines/{pipelineId}/tasks`,
+        {
+            params: {
+                path: {
+                    pipelineId,
+                },
+            },
+            body: {
+                action: "trigger",
+                contents: {
+                    variables,
+                    advanced,
+                },
+            },
+        }
+    )
+
+    if (error) {
+        throw new Error(
+            `❌ Failed to trigger pipeline: ${error.error.title} ${
+                error.error.detail ? ` - ${error.error.detail}` : ""
+            }`
+        )
     }
-  );
 
-  if (error) {
-    throw new Error(
-      `❌ Failed to trigger pipeline: ${error.error.title} ${
-        error.error.detail ? ` - ${error.error.detail}` : ""
-      }`
-    );
-  }
+    const { data: jd } = data
 
-  const { data: jd } = data;
+    try {
+        const job = await trackJob(client, jd.job?.id || "").promise
+        const pipelineRunId = job.tasks[0]?.output?.run_id
 
-  try {
-    const job = await trackJob(client, jd.job?.id || "").promise;
-    const pipelineRunId = job.tasks[0]?.output?.run_id;
-
-    if (!pipelineRunId) {
-      throw new Error(`❌ Failed to trigger pipeline: job is missing run ID`);
-    }
+        if (!pipelineRunId) {
+            throw new Error(
+                `❌ Failed to trigger pipeline: job is missing run ID`
+            )
+        }
 
     console.log(`✅ Pipeline triggered successfully! Run ID: ${pipelineRunId}`);
     return pipelineRunId;
@@ -98,25 +100,25 @@ async function triggerPipeline(
 
 // Polling function to track pipeline execution
 async function trackPipeline(
-  client: ReturnType<typeof getClient>,
-  pipelineId: string,
-  runId: string
+    client: ReturnType<typeof getClient>,
+    pipelineId: string,
+    runId: string
 ) {
-  const completedSteps = new Set<string>(); // Track completed steps
-  let startedSteps = new Set<string>(); // Track started steps
+    const completedSteps = new Set<string>() // Track completed steps
+    let startedSteps = new Set<string>() // Track started steps
 
-  while (true) {
-    const { data, error } = await client.GET(
-      `/v1/pipelines/{pipelineId}/runs/{runId}`,
-      {
-        params: {
-          path: {
-            pipelineId,
-            runId,
-          },
-        },
-      }
-    );
+    while (true) {
+        const { data, error } = await client.GET(
+            `/v1/pipelines/{pipelineId}/runs/{runId}`,
+            {
+                params: {
+                    path: {
+                        pipelineId,
+                        runId,
+                    },
+                },
+            }
+        )
 
     if (error) {
       throw new Error(
@@ -126,20 +128,36 @@ async function trackPipeline(
       );
     }
 
-    const { data: pipelineRun } = data;
+        const { data: pipelineRun } = data
 
-    pipelineRun.stages.forEach((stage, stageIdx) => {
-      stage.steps.forEach((step, stepIdx) => {
-        const stepId = `${stageIdx}-${stepIdx}`;
-        const finished = step.events.finished !== zeroTimeString;
+        //  Fail early if pipeline never started any stages
+        if (!pipelineRun.stages || pipelineRun.stages.length === 0) {
+            if (
+                ["failed", "canceled", "aborted", "error"].includes(
+                    pipelineRun.state.current
+                )
+            ) {
+                core.setFailed(
+                    `❌ Pipeline failed before any stages could start. Final state: ${pipelineRun.state.current}`
+                )
+                return
+            }
+        }
 
-        // Determine if the previous step is completed
-        const prevStep = stepIdx > 0 ? stage.steps[stepIdx - 1] : null;
-        const prevStepFinished = prevStep
-          ? prevStep.events.finished !== zeroTimeString
-          : true; 
+        pipelineRun.stages.forEach((stage, stageIdx) => {
+            stage.steps.forEach((step, stepIdx) => {
+                const stepId = `${stageIdx}-${stepIdx}`
+                const finished = step.events.finished !== zeroTimeString
 
-        const groupName = `[Stage ${stageIdx + 1}, Step ${stepIdx + 1}]: ${step.action}`
+                // Determine if the previous step is completed
+                const prevStep = stepIdx > 0 ? stage.steps[stepIdx - 1] : null
+                const prevStepFinished = prevStep
+                    ? prevStep.events.finished !== zeroTimeString
+                    : true
+
+                const groupName = `[Stage ${stageIdx + 1}, Step ${
+                    stepIdx + 1
+                }]: ${step.action}`
 
         if (prevStepFinished && !startedSteps.has(stepId)) {
           startedSteps.add(stepId);
@@ -163,13 +181,19 @@ async function trackPipeline(
       });
     });
 
-    if (pipelineRun.state.current === "complete") {
-      console.log("🎉 Pipeline run completed successfully!");
-      return;
-    }
+        const currentState = pipelineRun.state.current
 
-    await new Promise((res) => setTimeout(res, 3000));
-  }
+        if (currentState === "complete") {
+            console.log("🎉 Pipeline run completed successfully!")
+            return
+        } else if (
+            ["failed", "canceled", "aborted", "error"].includes(currentState)
+        ) {
+            throw new Error(`❌ Pipeline run failed with state: ${currentState}`)
+        }
+
+        await new Promise((res) => setTimeout(res, 3000))
+    }
 }
 
 async function run() {
@@ -198,19 +222,19 @@ async function run() {
       throw new Error("❌ Invalid JSON format in 'advanced' input.");
     }
 
-    const client = getClient({
-      apiKey,
-      hubId,
-      baseUrl: core.getInput("base_url") || undefined,
-    });
+        const client = getClient({
+            apiKey,
+            hubId,
+            baseUrl: core.getInput("base_url") || undefined,
+        })
 
-    // Step 1: Trigger the pipeline and get the run ID
-    const pipelineRunId = await triggerPipeline(
-      client,
-      pipelineId,
-      variables,
-      advanced
-    );
+        // Step 1: Trigger the pipeline and get the run ID
+        const pipelineRunId = await triggerPipeline(
+            client,
+            pipelineId,
+            variables,
+            advanced
+        )
 
     // Step 2: Track the pipeline progress
     await trackPipeline(client, pipelineId, pipelineRunId);
@@ -219,4 +243,4 @@ async function run() {
   }
 }
 
-run();
+run()
