@@ -5,6 +5,8 @@ import {
   trackJob,
 } from "@cycleplatform/api-client-typescript";
 
+import pipelineVariables from "../variables.json"
+
 type AdvancedOptions = {
   sub_queue?: string | null;
   skip_locks?: number | null;
@@ -40,7 +42,7 @@ async function triggerPipeline(
     );
   }
 
-  core.info(`🚀 Triggering pipeline: '${getPipelineData.data.name}'`);
+  console.log(`🚀 Triggering pipeline: '${getPipelineData.data.name}'`);
 
   const { data, error } = await client.POST(
     `/v1/pipelines/{pipelineId}/tasks`,
@@ -78,7 +80,7 @@ async function triggerPipeline(
       throw new Error(`❌ Failed to trigger pipeline: job is missing run ID`);
     }
 
-    core.info(`✅ Pipeline triggered successfully! Run ID: ${pipelineRunId}`);
+    console.log(`✅ Pipeline triggered successfully! Run ID: ${pipelineRunId}`);
     return pipelineRunId;
   } catch (e: unknown) {
     if (e && typeof e === "object" && "id" in e) {
@@ -117,12 +119,11 @@ async function trackPipeline(
     );
 
     if (error) {
-      core.setFailed(
+      throw new Error(
         `❌ Error fetching pipeline status: ${error.error.title} ${
           error.error.detail ? ` - ${error.error.detail}` : ""
         }`
       );
-      return;
     }
 
     const { data: pipelineRun } = data;
@@ -142,8 +143,7 @@ async function trackPipeline(
 
         if (prevStepFinished && !startedSteps.has(stepId)) {
           startedSteps.add(stepId);
-          core.startGroup(`${groupName}`)
-          core.info(
+          console.log(
             `⏳ Step started ${groupName}`
           );
         }
@@ -151,22 +151,20 @@ async function trackPipeline(
         if (finished && !completedSteps.has(stepId)) {
           completedSteps.add(stepId);
           if (step.success) {
-            core.info(
+            console.log(
               `✅ Step completed ${groupName}\n`
             );
           } else {
-            core.setFailed(
+            throw new Error(
               `❌ Step failed ${groupName} - ${step.error?.message}\n`
             );
-            return;
           }
-          core.endGroup()
         }
       });
     });
 
     if (pipelineRun.state.current === "complete") {
-      core.info("🎉 Pipeline run completed successfully!");
+      console.log("🎉 Pipeline run completed successfully!");
       return;
     }
 
@@ -176,13 +174,13 @@ async function trackPipeline(
 
 async function run() {
   try {
-    const pipelineId = core.getInput("pipeline_id");
-    const apiKey = core.getInput("api_key");
-    const hubId = core.getInput("hub_id");
+    const pipelineId = core.getInput("PIPELINE_ID");
+    const apiKey = core.getInput("API_KEY");
+    const hubId = core.getInput("HUB_ID");
 
     let variables: Record<string, string> = {};
     try {
-      const variablesInput = core.getInput("variables");
+      const variablesInput = core.getInput("VARIABLES");
       if (variablesInput) {
         variables = JSON.parse(variablesInput);
       }
@@ -192,9 +190,9 @@ async function run() {
 
     let advanced: AdvancedOptions = {};
     try {
-      const advancedInput = core.getInput("advanced");
+      const advancedInput = pipelineVariables.advanced; // core.getInput("advanced");
       if (advancedInput) {
-        advanced = JSON.parse(advancedInput);
+        advanced = JSON.parse(JSON.stringify(advancedInput));
       }
     } catch (error) {
       throw new Error("❌ Invalid JSON format in 'advanced' input.");
@@ -217,7 +215,7 @@ async function run() {
     // Step 2: Track the pipeline progress
     await trackPipeline(client, pipelineId, pipelineRunId);
   } catch (error) {
-    core.setFailed(`❌ Action failed: ${(error as Error).message}`);
+    throw new Error(`❌ Action failed: ${(error as Error).message}`);
   }
 }
 
